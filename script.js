@@ -15,16 +15,17 @@ function resizeCanvas() {
   canvas.height = window.innerHeight
 }
 
+let myPoint
 let index  = nextIndex()
 h1.textContent = `Index: ${index}`
 
 setInterval(function() {
   addPoint(index)
+  drawConnectionLines(storageManager.getAllItems())
 }, 1000)
 
-const radius = 10 * index + 10
-drawCircle(radius)
-drawLineFromPointToMiddleCirle(window.screenX, window.screenY, radius)
+// const radius = 10 * index + 10
+// drawLineFromPointToMiddleCirle(window.screenX, window.screenY, radius)
 
 
 
@@ -46,27 +47,47 @@ function addPoint(key) {
     xLocationOnScreen: window.screenX + window.innerWidth/2,
     yLocationOnScreen: window.screenY + window.innerHeight/2,
   }
+  myPoint = point
   storageManager.addItem(key, point)
 }
 
-function drawCircle(radius) {
+function drawCircle(x, y, radius) {
   ctx.lineWidth = LINEWIDTH
   ctx.beginPath()
-  ctx.arc(window.innerWidth/2, window.innerHeight/2 ,radius, 0, 2 * Math.PI)
+  ctx.arc(x, y, radius, 0, 2 * Math.PI)
   ctx.stroke()
 }
 
-function drawLineFromPointToMiddleCirle(x, y, radius) {
+function drawConnectionLines(items) {
+  clearCanvas()
+  const radius0 = 10 * index + 10
+  drawCircle(window.innerWidth/2, window.innerHeight/2, radius0)
+  for (const item of items) {
+    const radius1 = 10 * item[0] + 10
+
+    drawCircle(item[1].xLocationOnScreen - window.screenX, item[1].yLocationOnScreen - window.screenY, radius1)
+    let point0 = findClosestPointFromCircle(window.innerWidth/2, window.innerHeight/2, item[1].xLocationOnScreen - window.screenX, item[1].yLocationOnScreen - window.screenY, radius1)
+    let point1 = findClosestPointFromCircle(item[1].xLocationOnScreen - window.screenX, item[1].yLocationOnScreen - window.screenY, window.innerWidth/2, window.innerHeight/2, radius0)
+    drawLine(point0[0], point0[1], point1[0], point1[1])
+  }
+}
+
+function drawLine(x0, y0, x1, y1) {
   ctx.beginPath()
-  ctx.moveTo(x,y)
-  const point = findClosestPointFromCircle(x, y, radius)
-  ctx.lineTo(point[0], point[1])
+  ctx.moveTo(x0, y0)
+  ctx.lineTo(x1, y1)
   ctx.stroke()
 }
 
-function findClosestPointFromCircle(x, y, radius) {
-  const dx = x - window.innerWidth/2
-  const dy = y - window.innerHeight/2
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+}
+
+function findClosestPointFromCircle(xPoint, yPoint, xCircle, yCircle, radius) {
+  const dx = xPoint - xCircle
+  const dy = yPoint - yCircle
   const distance = Math.sqrt(dx * dx + dy * dy)
-  return [window.innerWidth/2 + dx * radius / distance, window.innerHeight/2 + dy * radius / distance]
+  const result = [xCircle + dx * radius / distance, yCircle + dy * radius / distance]  
+  console.log(result)
+  return result
 }
