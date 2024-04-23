@@ -1,4 +1,4 @@
-import CookieManager from './CookieManager.js'
+import CookieManager from '/script/CookieManager.js'
 
 const url = new URL(window.location.href)
 const storageManager = new CookieManager()
@@ -37,12 +37,10 @@ const updateInterval = setInterval(function() {
 function nextIndex() {
   let i = 0
   while(storageManager.getItem(i) !== null) {
-    console.log(storageManager.getItem(i))
     i++
   }
   return i
 }
-
 
 function updatePoint(key) {
   const point = {
