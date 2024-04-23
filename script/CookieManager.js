@@ -32,6 +32,11 @@ export default class CookieManager {
     return items
   }
 
+  getRawItems(){
+    const cookies = document.cookie
+    return cookies
+  }
+
   removeItem(key) {
     document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict;`
   }

@@ -4,6 +4,7 @@ const url = new URL(window.location.href)
 const storageManager = new CookieManager()
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
+const p = document.querySelector('p')
 
 const LINEWIDTH = 2
 const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'brown', 'grey', 'black']
@@ -20,18 +21,18 @@ window.addEventListener("beforeunload", function(){
   return null
 })
 
+let oldItems
 let index  = nextIndex()
 url.searchParams.set('i', index)
 window.history.replaceState(null, null, url)
 
-let myPosition = {
-  x: window.innerWidth/2,
-  y: window.innerHeight/2
-}
-
 const updateInterval = setInterval(function() {
   updatePoint(index)
-  drawConnectionLines(storageManager.getAllItems())
+
+  if (oldItems !== storageManager.getRawItems()) {
+    oldItems = storageManager.getRawItems()
+    drawConnectionLines(storageManager.getAllItems())
+  }
 }, 10)
 
 function nextIndex() {
@@ -47,30 +48,23 @@ function updatePoint(key) {
     x: window.screenX + window.innerWidth/2,
     y: window.screenY + window.innerHeight/2,
   }
-  myPosition = {
-    x: window.innerWidth/2,
-    y: window.innerHeight/2
-  }
   storageManager.addItem(key, point)
 }
 
 function drawConnectionLines(positions) {
   clearCanvas()
   for (const position of positions) {
-    const radius0 = calculateRadius(index)
-    const radius1 = calculateRadius(position.key)
-
-    drawCircle(xPosition(position.value.x), yPosition(position.value.y), radius1)
-
-    const point0 = findClosestPointFromCircle(myPosition.x, myPosition.y, xPosition(position.value.x), yPosition(position.value.y), radius1)
-    const point1 = findClosestPointFromCircle(xPosition(position.value.x), yPosition(position.value.y), myPosition.x, myPosition.y, radius0)
-    drawLine(point0.x, point0.y, point1.x, point1.y)
+    const radius0 = calculateRadius(position.key)
+    drawCircle(xPosition(position.value.x), yPosition(position.value.y), radius0)
 
     for (const otherPosition of positions) {
-      const radius2 = calculateRadius(otherPosition.key)
+      if (position.key === otherPosition.key) {
+        break
+      }
+      const radius1 = calculateRadius(otherPosition.key)
   
-      const point0 = findClosestPointFromCircle(xPosition(position.value.x), yPosition(position.value.y), xPosition(otherPosition.value.x), yPosition(otherPosition.value.y), radius2)
-      const point1 = findClosestPointFromCircle(xPosition(otherPosition.value.x), yPosition(otherPosition.value.y), xPosition(position.value.x), yPosition(position.value.y), radius1)
+      const point0 = findClosestPointFromCircle(xPosition(position.value.x), yPosition(position.value.y), xPosition(otherPosition.value.x), yPosition(otherPosition.value.y), radius1)
+      const point1 = findClosestPointFromCircle(xPosition(otherPosition.value.x), yPosition(otherPosition.value.y), xPosition(position.value.x), yPosition(position.value.y), radius0)
       drawLine(point0.x, point0.y, point1.x, point1.y)
     }
   }
