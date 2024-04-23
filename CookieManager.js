@@ -5,43 +5,34 @@ export default class CookieManager {
   }
 
   getItem(key) {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(`${key}=`)) {
-        const valueString = cookie.substring(key.toString().length + 1);
-        if (valueString && valueString.startsWith('{')) {
-          return JSON.parse(valueString);
-        }
+    const items = this.getAllItems();
+    for (let item of items) {
+      if (item.key == key) {
+        return item
       }
     }
-    return null;
+    return null
   }
 
   getAllItems() {
-    const cookies = document.cookie.split(';');
-    const items = [];
+    const cookies = document.cookie.split(';')
+    const items = []
+
     for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      const [key, valueString] = cookie.split('=');
+      const cookie = cookies[i].trim()
+      const [key, valueString] = cookie.split('=')
       if (valueString && valueString.startsWith('{')) {
-        const value = JSON.parse(valueString);
-        items.push([key, value]);
+        const value = JSON.parse(valueString)
+        items.push({
+          'key': key,
+          'value': value,
+        })
       }
     }
-    return items;
+    return items
   }
 
   removeItem(key) {
     document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict;`
-  }
-
-  clear() {
-    const cookies = document.cookie.split(';')
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim()
-      const [key] = cookie.split('=')
-      document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict;`
-    }
   }
 }

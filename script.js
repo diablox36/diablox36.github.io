@@ -1,9 +1,9 @@
 import CookieManager from './CookieManager.js'
 
+const url = new URL(window.location.href)
 const storageManager = new CookieManager()
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
-const h1 = document.querySelector('h1')
 
 const LINEWIDTH = 2
 const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'brown', 'grey', 'black']
@@ -14,68 +14,82 @@ function resizeCanvas() {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
 }
+window.addEventListener("beforeunload", function(){
+  this.clearInterval(updateInterval)
+  storageManager.removeItem(index)
+  return null
+})
 
-let myPoint
 let index  = nextIndex()
-h1.textContent = `Index: ${index}`
+url.searchParams.set('i', index)
+window.history.replaceState(null, null, url)
 
-setInterval(function() {
-  addPoint(index)
+let myPosition = {
+  x: window.innerWidth/2,
+  y: window.innerHeight/2
+}
+
+const updateInterval = setInterval(function() {
+  updatePoint(index)
   drawConnectionLines(storageManager.getAllItems())
-}, 1000)
-
-// const radius = 10 * index + 10
-// drawLineFromPointToMiddleCirle(window.screenX, window.screenY, radius)
-
-
+}, 10)
 
 function nextIndex() {
   let i = 0
   while(storageManager.getItem(i) !== null) {
+    console.log(storageManager.getItem(i))
     i++
   }
   return i
 }
 
-window.onbeforeunload = function() {
-  storageManager.removeItem(index)
-  return null
+
+function updatePoint(key) {
+  const point = {
+    x: window.screenX + window.innerWidth/2,
+    y: window.screenY + window.innerHeight/2,
+  }
+  myPosition = {
+    x: window.innerWidth/2,
+    y: window.innerHeight/2
+  }
+  storageManager.addItem(key, point)
 }
 
-function addPoint(key) {
-  const point = {
-    xLocationOnScreen: window.screenX + window.innerWidth/2,
-    yLocationOnScreen: window.screenY + window.innerHeight/2,
+function drawConnectionLines(positions) {
+  clearCanvas()
+  for (const position of positions) {
+    const radius0 = calculateRadius(index)
+    const radius1 = calculateRadius(position.key)
+
+    drawCircle(xPosition(position.value.x), yPosition(position.value.y), radius1)
+
+    const point0 = findClosestPointFromCircle(myPosition.x, myPosition.y, xPosition(position.value.x), yPosition(position.value.y), radius1)
+    const point1 = findClosestPointFromCircle(xPosition(position.value.x), yPosition(position.value.y), myPosition.x, myPosition.y, radius0)
+    drawLine(point0.x, point0.y, point1.x, point1.y)
+
+    for (const otherPosition of positions) {
+      const radius2 = calculateRadius(otherPosition.key)
+  
+      const point0 = findClosestPointFromCircle(xPosition(position.value.x), yPosition(position.value.y), xPosition(otherPosition.value.x), yPosition(otherPosition.value.y), radius2)
+      const point1 = findClosestPointFromCircle(xPosition(otherPosition.value.x), yPosition(otherPosition.value.y), xPosition(position.value.x), yPosition(position.value.y), radius1)
+      drawLine(point0.x, point0.y, point1.x, point1.y)
+    }
   }
-  myPoint = point
-  storageManager.addItem(key, point)
+}
+
+function drawLine(x0, y0, x1, y1) {
+  ctx.lineWidth = LINEWIDTH
+  ctx.beginPath()
+  ctx.moveTo(x0, y0)
+  ctx.lineTo(x1, y1)
+  ctx.stroke()
 }
 
 function drawCircle(x, y, radius) {
   ctx.lineWidth = LINEWIDTH
   ctx.beginPath()
   ctx.arc(x, y, radius, 0, 2 * Math.PI)
-  ctx.stroke()
-}
-
-function drawConnectionLines(items) {
-  clearCanvas()
-  const radius0 = 10 * index + 10
-  drawCircle(window.innerWidth/2, window.innerHeight/2, radius0)
-  for (const item of items) {
-    const radius1 = 10 * item[0] + 10
-
-    drawCircle(item[1].xLocationOnScreen - window.screenX, item[1].yLocationOnScreen - window.screenY, radius1)
-    let point0 = findClosestPointFromCircle(window.innerWidth/2, window.innerHeight/2, item[1].xLocationOnScreen - window.screenX, item[1].yLocationOnScreen - window.screenY, radius1)
-    let point1 = findClosestPointFromCircle(item[1].xLocationOnScreen - window.screenX, item[1].yLocationOnScreen - window.screenY, window.innerWidth/2, window.innerHeight/2, radius0)
-    drawLine(point0[0], point0[1], point1[0], point1[1])
-  }
-}
-
-function drawLine(x0, y0, x1, y1) {
-  ctx.beginPath()
-  ctx.moveTo(x0, y0)
-  ctx.lineTo(x1, y1)
   ctx.stroke()
 }
 
@@ -87,7 +101,18 @@ function findClosestPointFromCircle(xPoint, yPoint, xCircle, yCircle, radius) {
   const dx = xPoint - xCircle
   const dy = yPoint - yCircle
   const distance = Math.sqrt(dx * dx + dy * dy)
-  const result = [xCircle + dx * radius / distance, yCircle + dy * radius / distance]  
-  console.log(result)
-  return result
+  return {
+    x: xCircle + dx * radius / distance,
+    y: yCircle + dy * radius / distance,
+  }
+}
+
+function xPosition(x){
+  return x - window.screenX
+}
+function yPosition(y){
+  return y - window.screenY
+}
+function calculateRadius(number) {
+  return 10 * number + 10
 }
