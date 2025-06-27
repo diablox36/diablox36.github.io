@@ -13,8 +13,20 @@
     <div class="canvas-container">
         <canvas id="canvas"></canvas>
     </div>
-    <div>
-        <span class="title-text">PIXELS FIGHTING</span>
+    <div class="controls-container">
+        <div>
+            <span class="title-text">PIXELS FIGHTING</span>
+        </div>
+        <div class="controls-grid">
+            <label for="size-input">Size:</label>
+            <input type="number" id="size-input" value="500" min="1" step="1" onchange="setup()">
+
+            <label for="step-input">Step:</label>
+            <input type="number" id="step-input" value="4" min="1" step="1" onchange="setup()">
+
+            <label for="speed-input">Speed:</label>
+            <input type="number" id="speed-input" value="2" min="1" step="1" onchange="setup()">
+        </div>
     </div>
 </body>
 
