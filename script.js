@@ -1,19 +1,24 @@
-let canvas, ctx
+let canvas, ctx, imageData
+let color1, color2
 let interval
 let array
 let size, step
-const SPEED = 2
+const SPEED = 10
+
+const NEIGHBOR_OFFSETS = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
 
 generateColors()
 
 function init() {
-    size = document.getElementById("size-input").value
-    step = document.getElementById("step-input").value
+    size = parseInt(document.getElementById("size-input").value)
+    step = parseInt(document.getElementById("step-input").value)
     canvas = document.getElementById("canvas")
     ctx = canvas.getContext("2d")
 
     canvas.width = size * step
     canvas.height = size * step
+
+    imageData = ctx.createImageData(size * step, size * step)
 
     array = new Array(size)
     fillArray(array)
@@ -31,27 +36,27 @@ function fillArray(array) {
 }
 
 function calculate() {
-    let newArray = array.map(row => [...row])
+    let newArray = new Array(size)
 
     for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
+        newArray[i] = new Array(size)
 
-            let neighbors = []
-            for (let xVariation = -1; xVariation <= 1; xVariation++) {
-                for (let yVariation = -1; yVariation <= 1; yVariation++) {
-                    if (xVariation === 0 && yVariation === 0)
-                        continue
-                    let x = i + xVariation
-                    let y = j + yVariation
-                    if (x >= 0 && x < size && y >= 0 && y < size) {
-                        neighbors.push(array[x][y])
-                    }
+        for (let j = 0; j < size; j++) {
+            let count = 0
+            let totalNeighbors = 0
+
+            for (let k = 0; k < NEIGHBOR_OFFSETS.length; k++) {
+                let x = i + NEIGHBOR_OFFSETS[k][0]
+                let y = j + NEIGHBOR_OFFSETS[k][1]
+
+                if (x >= 0 && x < size && y >= 0 && y < size) {
+                    if (array[x][y] === 1)
+                        count++
+                    totalNeighbors++
                 }
             }
 
-            let count = neighbors.filter(n => n === 1).length
-            let ratio = count / neighbors.length
-
+            let ratio = count / totalNeighbors
             newArray[i][j] = ratio > Math.random() ? 1 : 0
         }
     }
@@ -60,25 +65,51 @@ function calculate() {
 }
 
 function draw() {
-    for (i = 0; i < size; i++) {
-        for (j = 0; j < size; j++) {
-            let color = array[i][j] === 1 ? color1 : color2
-            drawPixel(i, j, color)
+    const data = imageData.data
+    const canvasWidth = size * step
+
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            const color = array[i][j] === 1 ? color1 : color2
+
+            for (let px = 0; px < step; px++) {
+                for (let py = 0; py < step; py++) {
+                    const pixelX = i * step + px
+                    const pixelY = j * step + py
+                    const pixelIndex = (pixelY * canvasWidth + pixelX) * 4
+
+                    data[pixelIndex] = color.r
+                    data[pixelIndex + 1] = color.g
+                    data[pixelIndex + 2] = color.b
+                    data[pixelIndex + 3] = 255
+                }
+            }
         }
     }
-}
 
-function drawPixel(x, y, color) {
-    ctx.fillStyle = color
-    ctx.fillRect(x * step, y * step, step, step)
+    ctx.putImageData(imageData, 0, 0)
 }
 
 function generateColors() {
     const hue1 = Math.floor(Math.random() * 360)
-    const hue2 = (hue1 + 180) % 360 // Complementary color
-    
-    color1 = `hsl(${hue1}, 50%, 50%)`
-    color2 = `hsl(${hue2}, 50%, 50%)`
+    const hue2 = (hue1 + 180) % 360
+
+    color1 = hslToRgb(hue1, 50, 50)
+    color2 = hslToRgb(hue2, 50, 50)
+}
+
+function hslToRgb(h, s, l) {
+    h /= 360; s /= 100; l /= 100
+    const a = s * Math.min(l, 1 - l)
+    const f = n => {
+        const k = (n + h / (1 / 12)) % 12
+        return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+    }
+    return {
+        r: Math.round(f(0) * 255),
+        g: Math.round(f(8) * 255),
+        b: Math.round(f(4) * 255)
+    }
 }
 
 function run() {
