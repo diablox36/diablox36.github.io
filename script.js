@@ -1,136 +1,87 @@
 let canvas, ctx
 let interval
+let array
 let size, step
-let sum
+const SPEED = 2
 
-color1 = Math.floor(Math.random() * 16777215).toString(16)
-color1 = "#" + ("000000" + color1).slice(-6)
-color2 = Math.floor(Math.random() * 16777215).toString(16)
-color2 = "#" + ("000000" + color2).slice(-6)
+generateColors()
 
-function setup() {
+function init() {
+    size = document.getElementById("size-input").value
+    step = document.getElementById("step-input").value
     canvas = document.getElementById("canvas")
     ctx = canvas.getContext("2d")
 
-    const sizeInput = 500
-    const stepInput = 4
+    canvas.width = size * step
+    canvas.height = size * step
 
-    canvas.width = sizeInput
-    canvas.height = sizeInput
+    array = new Array(size)
+    fillArray(array)
 
-    size = sizeInput / stepInput
-    step = stepInput
-
-    sum = 0
-
-    initialize()
-    interval = setInterval(run, 2)
+    interval = setInterval(run, SPEED)
 }
 
-function initialize() {
-    oldArray = new Array(size)
-    newArray = new Array(size)
-
-    neighArray = new Array(size)
-    ratioArray = new Array(size)
-
-    for (i = 0; i < oldArray.length; ++i) {
-        oldArray[i] = new Array(size)
-        newArray[i] = new Array(size)
-        neighArray[i] = new Array(size)
-        ratioArray[i] = new Array(size)
-
-    }
-
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            ratioArray[i][j] = 0
-            neighArray[i][j] = 8
-            if (i === 0 || i === size - 1) {
-                neighArray[i][j] = 5
-                if (j === 0 || j === size - 1) {
-                    neighArray[i][j] = 3
-                }
-            }
-            if (j === 0 || j === size - 1) {
-                neighArray[i][j] = 5
-                if (i === 0 || i === size - 1) {
-                    neighArray[i][j] = 3
-                }
-            }
-
-            if (i < size / 2) {
-                oldArray[i][j] = 1
-                sum += 1
-            }
-            else {
-                oldArray[i][j] = 0
-            }
-            newArray[i][j] = oldArray[i][j]
-        }
-    }
-    sum = sum / (size * size)
-}
-
-function ratio() {
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            ratioArray[i][j] = 0
-            if (i > 0) {
-                if (j > 0) { ratioArray[i][j] += oldArray[i - 1][j - 1] }
-                ratioArray[i][j] += oldArray[i - 1][j]
-                if (j < size - 1) { ratioArray[i][j] += oldArray[i - 1][j + 1] }
-            }
-
-            if (j > 0) { ratioArray[i][j] += oldArray[i][j - 1] }
-            if (j < size - 1) { ratioArray[i][j] += oldArray[i][j + 1] }
-
-            if (i < size - 1) {
-                if (j > 0) { ratioArray[i][j] += oldArray[i + 1][j - 1] }
-                ratioArray[i][j] += oldArray[i + 1][j]
-                if (j < size - 1) { ratioArray[i][j] += oldArray[i + 1][j + 1] }
-            }
-
-            ratioArray[i][j] = ratioArray[i][j] / neighArray[i][j]
-        }
-    }
-}
-
-function draw() {
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            ctx.fillStyle = color1
-            if (oldArray[i][j] === 1) { ctx.fillStyle = color2 }
-            ctx.fillRect(i * step, j * step, step, step)
+function fillArray(array) {
+    for (let i = 0; i < size; i++) {
+        array[i] = new Array(size)
+        for (let j = 0; j < size; j++) {
+            array[i][j] = i >= size / 2 ? 1 : 0
         }
     }
 }
 
 function calculate() {
+    let newArray = array.map(row => [...row])
 
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            help = Math.random()
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
 
-            if ((ratioArray[i][j]) > help) {
-                oldArray[i][j] = 1
-            } else {
-                oldArray[i][j] = 0
+            let neighbors = []
+            for (let xVariation = -1; xVariation <= 1; xVariation++) {
+                for (let yVariation = -1; yVariation <= 1; yVariation++) {
+                    if (xVariation === 0 && yVariation === 0)
+                        continue
+                    let x = i + xVariation
+                    let y = j + yVariation
+                    if (x >= 0 && x < size && y >= 0 && y < size) {
+                        neighbors.push(array[x][y])
+                    }
+                }
             }
+
+            let count = neighbors.filter(n => n === 1).length
+            let ratio = count / neighbors.length
+
+            newArray[i][j] = ratio > Math.random() ? 1 : 0
         }
     }
 
-    sum = 0
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            if (oldArray[i][j] == 1) sum += 1
+    array = newArray
+}
+
+function draw() {
+    for (i = 0; i < size; i++) {
+        for (j = 0; j < size; j++) {
+            let color = array[i][j] === 1 ? color1 : color2
+            drawPixel(i, j, color)
         }
     }
-    sum = sum / (size * size)
+}
+
+function drawPixel(x, y, color) {
+    ctx.fillStyle = color
+    ctx.fillRect(x * step, y * step, step, step)
+}
+
+function generateColors() {
+    const hue1 = Math.floor(Math.random() * 360)
+    const hue2 = (hue1 + 180) % 360 // Complementary color
+    
+    color1 = `hsl(${hue1}, 50%, 50%)`
+    color2 = `hsl(${hue2}, 50%, 50%)`
 }
 
 function run() {
-    ratio()
-    draw()
     calculate()
+    draw()
 }
