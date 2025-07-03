@@ -10,19 +10,29 @@
 </head>
 
 <body onload="init()" class="vsc-initialized">
+    <div>
+
+    </div>
     <div class="controls-container">
         <div class="title-container">
             <span class="title-text">PIXELS FIGHTING</span>
         </div>
         <div class="controls-grid">
-            <label for="size-input">Size:</label>
+            <label for="size-input">Grid size:</label>
             <input type="number" id="size-input" value="150" min="1" step="1" onchange="init()">
 
-            <label for="step-input">Step:</label>
+            <label for="step-input">Pixel size:</label>
             <input type="number" id="step-input" value="4" min="1" step="1" onchange="init()">
+
+            <label for="number-input">Colors:</label>
+            <input type="number" id="number-input" value="2" min="2" step="1" max="360" onchange="init()">
+
         </div>
     </div>
     <canvas id="canvas"></canvas>
+    <div class="bottom-left">
+        <a href="#" onclick="changeAlgorithm()">toggle algorithm (2 colors)</a>
+    </div>
 </body>
 
 </html>

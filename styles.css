@@ -31,6 +31,7 @@ canvas {
     display: grid;
     grid-template-columns: auto auto;
     justify-content: start;
+    align-items: center;
     gap: 0.2em;
     width: 292px;
     color: var(--text);
@@ -39,4 +40,15 @@ canvas {
 .controls-grid input {
     width: 5em;
     color: var(--bg);
+}
+
+a {
+    font-size: 0.8em;
+    color: var(--text);
+}
+.bottom-left {
+    position: fixed;
+    bottom: 8px;
+    left: 8px;
+    z-index: 1000;
 }
