@@ -9,11 +9,26 @@
     <script src="script.js"></script>
 </head>
 
-<body onload="setup()" class="vsc-initialized">
-    <div class="canvas-container">
-        <canvas id="canvas"></canvas>
+<body onload="init()" class="vsc-initialized">
+    <div>
+
     </div>
-    <span class="title-text">PIXELS FIGHTING</span>
+    <div class="controls-container">
+        <div class="title-container">
+            <span class="title-text">PIXELS FIGHTING</span>
+        </div>
+        <div class="controls-grid">
+            <label for="size-input">Grid size:</label>
+            <input type="number" id="size-input" value="150" min="1" step="1" onchange="init()">
+
+            <label for="step-input">Pixel size:</label>
+            <input type="number" id="step-input" value="4" min="1" step="1" onchange="init()">
+
+            <label for="colorCount-input">Colors:</label>
+            <input type="number" id="colorCount-input" value="2" min="2" step="1" max="360" onchange="init()">
+        </div>
+    </div>
+    <canvas id="canvas"></canvas>
 </body>
 
 </html>

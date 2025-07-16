@@ -1,136 +1,139 @@
-let canvas, ctx
-let interval
-let size, step
-let sum
+let canvas, ctx, imageData;
+let interval;
+let array, colors;
+let size, step, colorCount;
+const SPEED = 10;
 
-color1 = Math.floor(Math.random() * 16777215).toString(16)
-color1 = "#" + ("000000" + color1).slice(-6)
-color2 = Math.floor(Math.random() * 16777215).toString(16)
-color2 = "#" + ("000000" + color2).slice(-6)
+const OFFSETS = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
 
-function setup() {
-    canvas = document.getElementById("canvas")
-    ctx = canvas.getContext("2d")
+function init() {
+    clearInterval(interval);
 
-    const sizeInput = 500
-    const stepInput = 4
+    size = parseInt(document.getElementById("size-input").value);
+    step = parseInt(document.getElementById("step-input").value);
+    colorCount = parseInt(document.getElementById("colorCount-input").value);
 
-    canvas.width = sizeInput
-    canvas.height = sizeInput
+    canvas = document.getElementById("canvas");
+    ctx = canvas.getContext("2d");
 
-    size = sizeInput / stepInput
-    step = stepInput
+    canvas.width = size * step;
+    canvas.height = size * step;
 
-    sum = 0
+    colors = generateColors();
 
-    initialize()
-    interval = setInterval(run, 2)
+    imageData = ctx.createImageData(size * step, size * step);
+
+    array = Array(size).fill().map(() => Array(size));
+    fillArray(array);
+
+    interval = setInterval(run, SPEED);
 }
 
-function initialize() {
-    oldArray = new Array(size)
-    newArray = new Array(size)
+function fillArray(array) {
+    const center = size / 2;
+    const anglePerSection = (2 * Math.PI) / colorCount;
 
-    neighArray = new Array(size)
-    ratioArray = new Array(size)
-
-    for (i = 0; i < oldArray.length; ++i) {
-        oldArray[i] = new Array(size)
-        newArray[i] = new Array(size)
-        neighArray[i] = new Array(size)
-        ratioArray[i] = new Array(size)
-
-    }
-
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            ratioArray[i][j] = 0
-            neighArray[i][j] = 8
-            if (i === 0 || i === size - 1) {
-                neighArray[i][j] = 5
-                if (j === 0 || j === size - 1) {
-                    neighArray[i][j] = 3
-                }
-            }
-            if (j === 0 || j === size - 1) {
-                neighArray[i][j] = 5
-                if (i === 0 || i === size - 1) {
-                    neighArray[i][j] = 3
-                }
-            }
-
-            if (i < size / 2) {
-                oldArray[i][j] = 1
-                sum += 1
-            }
-            else {
-                oldArray[i][j] = 0
-            }
-            newArray[i][j] = oldArray[i][j]
-        }
-    }
-    sum = sum / (size * size)
-}
-
-function ratio() {
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            ratioArray[i][j] = 0
-            if (i > 0) {
-                if (j > 0) { ratioArray[i][j] += oldArray[i - 1][j - 1] }
-                ratioArray[i][j] += oldArray[i - 1][j]
-                if (j < size - 1) { ratioArray[i][j] += oldArray[i - 1][j + 1] }
-            }
-
-            if (j > 0) { ratioArray[i][j] += oldArray[i][j - 1] }
-            if (j < size - 1) { ratioArray[i][j] += oldArray[i][j + 1] }
-
-            if (i < size - 1) {
-                if (j > 0) { ratioArray[i][j] += oldArray[i + 1][j - 1] }
-                ratioArray[i][j] += oldArray[i + 1][j]
-                if (j < size - 1) { ratioArray[i][j] += oldArray[i + 1][j + 1] }
-            }
-
-            ratioArray[i][j] = ratioArray[i][j] / neighArray[i][j]
-        }
-    }
-}
-
-function draw() {
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            ctx.fillStyle = color1
-            if (oldArray[i][j] === 1) { ctx.fillStyle = color2 }
-            ctx.fillRect(i * step, j * step, step, step)
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            const angle = Math.atan2(i - center, j - center) + Math.PI;
+            array[i][j] = Math.floor(angle / anglePerSection) % colorCount;
         }
     }
 }
 
 function calculate() {
+    const newArray = Array(size).fill().map(() => Array(size));
 
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            help = Math.random()
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            const colorCounts = new Map();
+            let adjacentCount = 0;
 
-            if ((ratioArray[i][j]) > help) {
-                oldArray[i][j] = 1
-            } else {
-                oldArray[i][j] = 0
+            for (const [dx, dy] of OFFSETS) {
+                const x = i + dx;
+                const y = j + dy;
+
+                if (x >= 0 && x < size && y >= 0 && y < size) {
+                    adjacentCount++;
+                    const color = array[x][y];
+                    colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+                }
+            }
+
+            let bestColor = 0;
+            let maxRatio = -1;
+
+            for (const [color, count] of colorCounts) {
+                const randomness = Math.random() * 3.15 / colorCounts.size
+                const ratio = (count / adjacentCount) + randomness;
+                if (ratio > maxRatio) {
+                    maxRatio = ratio;
+                    bestColor = color;
+                }
+            }
+
+            newArray[i][j] = bestColor;
+        }
+    }
+
+    array = newArray;
+}
+
+function draw() {
+    const data = imageData.data;
+    const canvasWidth = size * step;
+
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            const color = colors[array[i][j]];
+
+            for (let px = 0; px < step; px++) {
+                for (let py = 0; py < step; py++) {
+                    const pixelX = i * step + px;
+                    const pixelY = j * step + py;
+                    const pixelIndex = (pixelY * canvasWidth + pixelX) * 4;
+
+                    data[pixelIndex] = color.r;
+                    data[pixelIndex + 1] = color.g;
+                    data[pixelIndex + 2] = color.b;
+                    data[pixelIndex + 3] = 255;
+                }
             }
         }
     }
 
-    sum = 0
-    for (i = 0; i < size; ++i) {
-        for (j = 0; j < size; ++j) {
-            if (oldArray[i][j] == 1) sum += 1
-        }
+    ctx.putImageData(imageData, 0, 0);
+}
+
+function generateColors() {
+    let colorArray = new Array(colorCount);
+
+    const baseOffset = Math.random() * 360;
+    const hueStep = 360 / colorCount;
+
+    for (let i = 0; i < colorCount; i++) {
+        const hue = (baseOffset + i * hueStep) % 360;
+        colorArray[i] = hslToRgb(hue, 60, 50);
     }
-    sum = sum / (size * size)
+
+    return colorArray;
+}
+
+function hslToRgb(h, s, l) {
+    h /= 360; s /= 100; l /= 100;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => {
+        const k = (n + h / (1 / 12)) % 12;
+        return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    }
+    return {
+        r: Math.round(f(0) * 255),
+        g: Math.round(f(8) * 255),
+        b: Math.round(f(4) * 255)
+    }
 }
 
 function run() {
-    ratio()
-    draw()
-    calculate()
+    calculate();
+    draw();
 }

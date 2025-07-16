@@ -1,16 +1,43 @@
 :root {
     --bg: hsl(0, 0%, 8%);
+    --bg-light: hsl(0, 0%, 10%);
     --text: hsl(0, 0%, 90%);
 }
 
 body {
     font-family: Arial, sans-serif;
-    margin: 0;
     background-color: var(--bg);
+    display: inline-flex;
+    margin-bottom: 0;
+    margin-right: 0;
+}
+
+canvas {
+    background-color: var(--bg-light);
 }
 
 .title-text {
     font-weight: bold;
-    font-size: 1.5em;
+    font-size: 2em;
+    margin-right: 0.2em;
     color: var(--text);
+}
+
+.title-container {
+    margin-bottom: 0.2em;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: start;
+    align-items: center;
+    gap: 0.2em;
+    width: 292px;
+    color: var(--text);
+}
+
+.controls-grid input {
+    width: 5em;
+    color: var(--bg);
 }
