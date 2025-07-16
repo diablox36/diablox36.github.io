@@ -2,29 +2,34 @@
     --bg: hsl(0, 0%, 8%);
     --bg-light: hsl(0, 0%, 10%);
     --text: hsl(0, 0%, 90%);
+    font-family: Arial, sans-serif;
+    font-size: 16px;
 }
 
 body {
-    font-family: Arial, sans-serif;
     background-color: var(--bg);
     display: inline-flex;
-    margin-bottom: 0;
-    margin-right: 0;
+    margin: 0;
 }
 
 canvas {
     background-color: var(--bg-light);
+    margin-top: 8px;
 }
 
 .title-text {
+    font-size: 2rem;
     font-weight: bold;
-    font-size: 2em;
-    margin-right: 0.2em;
     color: var(--text);
 }
 
 .title-container {
-    margin-bottom: 0.2em;
+    margin-bottom: 8px;
+}
+
+.controls-container {
+    margin-top: 1.5px;
+    margin-left: 8px;
 }
 
 .controls-grid {
@@ -32,7 +37,7 @@ canvas {
     grid-template-columns: auto auto;
     justify-content: start;
     align-items: center;
-    gap: 0.2em;
+    gap: 4px;
     width: 292px;
     color: var(--text);
 }
