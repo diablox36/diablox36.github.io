@@ -34,6 +34,7 @@ function loadImage(event) {
                 imgWidth = img.width * ratio;
                 imgHeight = img.height * ratio;
                 imageLoaded = true;
+                document.getElementById('image-input').style.display = 'none';
             };
         };
         reader.readAsDataURL(file);
@@ -47,7 +48,7 @@ function drawDefaultLogo() {
 }
 
 function animate() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 1)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Update position
