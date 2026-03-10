@@ -6,7 +6,20 @@ let imgWidth = 100, imgHeight = 60;
 let hue = 0;
 let imageLoaded = false;
 
+// Get URL parameters
+function getURLParams() {
+    const params = new URLSearchParams(window.location.search);
+    const speed = parseFloat(params.get('speed')) || 2;
+    const size = parseFloat(params.get('size')) || 150;
+    return { speed, size };
+}
+
 function init() {
+    const { speed, size } = getURLParams();
+    dx = speed;
+    dy = speed;
+    imgWidth = size;
+    imgHeight = size * 0.6; // maintain aspect ratio
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
     
@@ -28,8 +41,8 @@ function loadImage(event) {
         reader.onload = function(e) {
             img.src = e.target.result;
             img.onload = function() {
-                // Scale image to reasonable size
-                const maxSize = 150;
+                const { size } = getURLParams();
+                const maxSize = size;
                 const ratio = Math.min(maxSize / img.width, maxSize / img.height);
                 imgWidth = img.width * ratio;
                 imgHeight = img.height * ratio;
