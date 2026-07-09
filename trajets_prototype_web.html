@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrajÉTS — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-deep:#0b5d34;
+    --green:#12793f;
+    --green-soft:#dcefdf;
+    --web-side-width:360px;
+    --ink:#161a17;
+    --ink-soft:#4d564e;
+    --muted:#8b948b;
+    --paper:#ffffff;
+    --map-bg:#eceee9;
+    --map-line:#cfd3c9;
+    --map-line-strong:#b7bcb0;
+    --danger:#c1382b;
+    --star:#1a1d1a;
+    --radius-lg:26px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    --shadow-card: 0 12px 30px -12px rgba(11,30,18,0.28), 0 2px 6px rgba(11,30,18,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background: radial-gradient(circle at 20% 10%, #f3f5f1 0%, #e3e6df 60%, #d7dbd2 100%);
+    min-height:100vh;
+    color:var(--ink);
+    padding-bottom:0;
+  }
+
+  /* ================= TOP TOOLBAR ================= */
+  .toolbar{
+    display:none;
+  }
+  .toolbar-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700; font-size:16px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .toolbar-title .dot{width:8px;height:8px;border-radius:50%; background:var(--green-deep);}
+  .view-switch{
+    display:none;
+  }
+  .view-switch button{
+    border:none; background:none; cursor:pointer;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px;
+    padding:9px 20px; border-radius:999px; color:var(--ink-soft);
+    display:flex; align-items:center; gap:7px;
+    transition:background .15s ease, color .15s ease;
+  }
+  .view-switch button svg{width:15px;height:15px; stroke:currentColor; fill:none; stroke-width:2;}
+  .view-switch button.active{background:var(--green-deep); color:#eef4ef;}
+
+  .stage{
+    display:flex; justify-content:center; padding:0;
+    min-height:calc(100vh - 65px);
+  }
+
+  /* ================= MOBILE VIEW ================= */
+  #view-mobile{display:none !important;}
+  .phone,
+  .notch,
+  .screen{ display:none !important; }
+
+  /* fake map background */
+  .map-layer{ position:absolute; inset:0; background:var(--map-bg); overflow:hidden; }
+  .map-layer svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .map-tag{ position:absolute; font-family:'Inter',sans-serif; font-size:11px; color:#8d938a; }
+  .map-tag.strong{ font-weight:700; font-size:15px; color:#767c72; font-family:'Space Grotesk',sans-serif; }
+
+  .bottom-nav{
+    position:absolute; left:16px; right:16px; bottom:22px; height:58px;
+    background:var(--green-deep); border-radius:29px;
+    display:flex; align-items:center; justify-content:space-around;
+    box-shadow:0 14px 26px -10px rgba(11,93,52,0.55); z-index:20;
+  }
+  .bottom-nav button{ background:none;border:none;cursor:pointer; width:44px;height:44px;
+    display:flex;align-items:center;justify-content:center; border-radius:50%; transition:background .15s ease; }
+  .bottom-nav button:hover{background:rgba(255,255,255,0.12);}
+  .bottom-nav svg{width:22px;height:22px;stroke:#eef4ef;fill:none;stroke-width:1.8;}
+
+  .btn{ display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif;
+    font-weight:600; font-size:15px; border:none; border-radius:var(--radius-sm); cursor:pointer;
+    padding:14px 18px; transition:transform .12s ease, filter .12s ease; }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--green-deep); color:#eef4ef;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-outline{background:var(--paper); color:var(--green-deep); border:1.5px solid var(--green-deep);}
+
+  .login-wrap{ flex:1; padding:56px 28px 34px; display:flex; flex-direction:column; }
+  .logo{ font-family:'Space Grotesk',sans-serif; font-size:30px; font-weight:700; margin-bottom:38px; }
+  .logo span{ background:var(--green-soft); color:var(--green-deep); padding:2px 8px; border-radius:8px; }
+  .login-title{ font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:600; margin:0 0 22px 0; }
+  .field{ border:1.5px solid #e1e4dd; border-radius:var(--radius-sm); padding:14px 16px; font-size:14.5px;
+    color:var(--ink-soft); margin-bottom:14px; background:#fbfcfa; }
+  .field.select{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; color:var(--ink); }
+  .field.select svg{width:14px;height:14px;stroke:var(--muted); fill:none; stroke-width:2;}
+  .login-actions{ margin-top:auto; display:flex; flex-direction:column; gap:10px; }
+
+  .eval-card{ position:absolute; top:92px; left:18px; right:18px; background:var(--paper);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow-card); padding:22px 20px; z-index:15; }
+  .eval-card-close{ position:absolute; top:14px; right:16px; width:30px;height:30px; background:var(--danger);
+    border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .eval-card-close svg{width:15px;height:15px;stroke:#fff; stroke-width:2.6;}
+  .eval-title{ font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:600; margin:0 0 18px 0; }
+  .eval-sub{ text-align:center; margin-bottom:16px; }
+  .eval-sub .route{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:16px; }
+  .eval-sub .date{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .eval-table{ border:1px solid #e7e9e3; border-radius:var(--radius-sm); overflow:hidden; }
+  .eval-row{ display:flex; align-items:center; gap:12px; padding:12px; border-bottom:1px solid #eef0ea; }
+  .eval-row:last-child{ border-bottom:none; }
+  .eval-icon{ width:34px;height:34px; border-radius:50%; background:var(--green-soft);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .eval-icon svg{width:18px;height:18px; stroke:var(--green-deep); fill:none; stroke-width:1.7;}
+  .eval-name{ flex:1; font-size:13.5px; font-weight:600; min-width:0; }
+  .eval-name.anon{ height:9px; width:64%; border-radius:5px;
+    background:repeating-linear-gradient(100deg, #d7dbd0 0 8px, transparent 8px 10px); }
+  .stars{display:flex; gap:2px; flex-shrink:0;}
+  .stars svg{width:13px;height:13px;}
+  .star-fill{fill:var(--star); stroke:var(--star); stroke-width:1;}
+  .star-empty{fill:none; stroke:var(--star); stroke-width:1.3;}
+  .check-ok{width:16px;height:16px; stroke:var(--green-deep); stroke-width:2.4; fill:none; flex-shrink:0;}
+
+  .search-card{ position:absolute; top:88px; left:18px; right:18px; background:var(--paper);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow-card); padding:18px 18px 20px; z-index:15; }
+  .mode-toggle{ display:flex; background:#f0f2ec; border-radius:var(--radius-sm); padding:4px; margin-bottom:16px; gap:4px; }
+  .mode-toggle button{ flex:1; border:none; background:none; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; padding:10px 0; border-radius:8px; transition:background .15s ease, color .15s ease; color:var(--ink-soft); }
+  .mode-toggle button svg{width:19px;height:19px; stroke:currentColor; fill:none; stroke-width:1.8;}
+  .mode-toggle button.selected{background:var(--green-deep); color:#eef4ef;}
+
+  .list-header{ padding:56px 22px 6px; }
+  .list-title{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:19px;}
+  .list-sub{color:var(--muted); font-size:12.5px; margin-top:2px;}
+  .list-body{ flex:1; overflow-y:auto; padding:14px 18px 100px; display:flex; flex-direction:column; gap:10px; }
+  .ride-row{ display:flex; align-items:center; gap:12px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
+    padding:12px 14px; background:#fff; }
+  .ride-icon{ width:38px;height:38px; border-radius:50%; background:var(--green-soft); display:flex;
+    align-items:center; justify-content:center; flex-shrink:0; }
+  .ride-icon svg{width:19px;height:19px; stroke:var(--green-deep); fill:none; stroke-width:1.7;}
+  .ride-name{ flex:1; height:10px; border-radius:5px;
+    background:repeating-linear-gradient(100deg, #dde1d6 0 10px, transparent 10px 13px); }
+  .ride-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:var(--green-deep); flex-shrink:0; }
+
+  .form-header{padding:56px 22px 10px;}
+  .form-body{padding:0 22px 100px; display:flex; flex-direction:column; gap:22px; overflow-y:auto; flex:1;}
+  .form-group label{ display:block; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px;
+    margin-bottom:9px; color:var(--ink); }
+  .price-field{ display:flex; align-items:center; gap:8px; border:1.5px solid #e1e4dd; border-radius:var(--radius-sm);
+    padding:12px 16px; width:130px; }
+  .price-field span{font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--green-deep);}
+  .price-field input{border:none; outline:none; width:100%; font-size:14px; background:none;}
+  .pill-group{display:flex; gap:8px;}
+  .pill{ width:42px; height:42px; border-radius:50%; border:1.5px solid #e1e4dd; background:#fff; display:flex;
+    align-items:center; justify-content:center; font-weight:600; font-size:14px; cursor:pointer; transition:all .12s ease; }
+  .pill.selected{background:var(--green-deep); border-color:var(--green-deep); color:#eef4ef;}
+  .toggle-group{display:flex; gap:8px;}
+  .toggle-btn{ width:52px; height:42px; border-radius:var(--radius-sm); border:1.5px solid #e1e4dd; background:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .toggle-btn svg{width:16px;height:16px; stroke-width:2.4;}
+  .toggle-btn.yes.selected{background:var(--green-soft); border-color:var(--green-deep);}
+  .toggle-btn.yes.selected svg{stroke:var(--green-deep);}
+  .toggle-btn.no.selected{background:#fbeceb; border-color:var(--danger);}
+  .toggle-btn.no.selected svg{stroke:var(--danger);}
+  .toggle-btn:not(.selected) svg{stroke:#b7bcb0;}
+  .form-save{position:absolute; left:22px; right:22px; bottom:96px;}
+
+  .upc-row{ display:flex; align-items:center; gap:12px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
+    padding:12px 14px; background:#fff; }
+  .upc-icon{width:38px;height:38px;border-radius:50%;background:var(--green-soft); display:flex;align-items:center;justify-content:center; flex-shrink:0;}
+  .upc-icon svg{width:18px;height:18px;stroke:var(--green-deep); fill:none; stroke-width:1.7;}
+  .upc-mid{flex:1; min-width:0;}
+  .upc-route{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;}
+  .upc-date{color:var(--muted); font-size:11.5px; margin-top:2px;}
+  .upc-price{font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--green-deep); font-size:14px;}
+
+  .profile-top{padding:52px 22px 20px; display:flex; flex-direction:column; align-items:center;}
+  .back-arrow{ position:absolute; top:24px; left:20px; width:34px;height:34px; border-radius:50%; display:flex;
+    align-items:center;justify-content:center; background:#f0f2ec; border:none; cursor:pointer; }
+  .back-arrow svg{width:16px;height:16px; stroke:var(--ink); stroke-width:2.2;}
+  .avatar-wrap{position:relative; margin-bottom:6px;}
+  .avatar{ width:96px;height:96px; border-radius:50%; background:var(--green-soft); display:flex;
+    align-items:center; justify-content:center; }
+  .avatar svg{width:52px;height:52px; stroke:var(--green-deep); fill:none; stroke-width:1.5;}
+  .avatar-edit{ position:absolute; right:0; bottom:2px; width:28px;height:28px; border-radius:50%;
+    background:var(--green-deep); border:3px solid #fff; display:flex; align-items:center; justify-content:center; }
+  .avatar-edit svg{width:13px;height:13px; stroke:#fff; fill:none; stroke-width:2;}
+  .profile-name{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:17px; margin-top:10px;}
+  .profile-list{padding:6px 22px; display:flex; flex-direction:column; gap:10px;}
+  .profile-item{ display:flex; align-items:center; gap:14px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
+    padding:14px 16px; background:#fff; }
+  .profile-item svg{width:19px;height:19px; stroke:var(--ink-soft); fill:none; stroke-width:1.7;}
+  .profile-item span{font-size:14px; font-weight:500;}
+  .logout-btn{ position:absolute; left:22px; right:22px; bottom:96px; background:var(--danger); color:#fdf0ee; }
+  .logout-btn svg{width:17px;height:17px; stroke:#fdf0ee; stroke-width:2.2; margin-right:8px;}
+  .scroll-area{overflow-y:auto;}
+
+  /* ================= WEB VIEW ================= */
+  #view-web{ display:flex; flex-direction:column; align-items:stretch; width:100%; min-height:100%; }
+  .browser-frame{
+    width:100%; height:100vh;
+    background:#fff; border-radius:0; overflow:hidden;
+    box-shadow:none;
+    display:flex; flex-direction:column;
+    border:none;
+  }
+  .browser-topbar{
+    display:none;
+  }
+  .dots{display:flex; gap:6px;}
+  .dots span{width:10px;height:10px;border-radius:50%;}
+  .dots span:nth-child(1){background:#e5695c;}
+  .dots span:nth-child(2){background:#e3b94f;}
+  .dots span:nth-child(3){background:#63b76c;}
+  .browser-url{
+    flex:1; background:#fff; border:1px solid #dde1d6; border-radius:8px;
+    font-size:12.5px; color:var(--ink-soft); padding:6px 12px;
+    font-family:'Inter'; display:flex; align-items:center; gap:8px;
+  }
+  .browser-url svg{width:12px;height:12px; stroke:var(--muted); fill:none; stroke-width:2;}
+
+  .site-nav{
+    display:none;
+  }
+  .site-logo{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px;}
+  .site-logo span{background:var(--green-soft); color:var(--green-deep); padding:2px 8px; border-radius:8px;}
+  .site-links{display:flex; gap:6px;}
+  .site-links button{
+    border:none; background:none; cursor:pointer; font-family:'Space Grotesk',sans-serif; font-weight:600;
+    font-size:13.5px; padding:9px 16px; border-radius:8px; color:var(--ink-soft);
+  }
+  .site-links button.selected{background:var(--green-soft); color:var(--green-deep);}
+  .site-right{display:flex; align-items:center; gap:10px;}
+  .site-avatar-btn{
+    width:36px;height:36px; border-radius:50%; background:var(--green-soft); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .site-avatar-btn svg{width:18px;height:18px; stroke:var(--green-deep); fill:none; stroke-width:1.7;}
+
+  .web-body{ flex:1; overflow-y:auto; background:#fafbf8; min-height:0; }
+  .web-body{ position:relative; }
+  .web-screen{ display:none; min-height:100%; }
+  .web-screen.active{ display:block; }
+
+  .web-hotbar{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%);
+    width:min(720px, calc(100% - 48px));
+    z-index:20;
+    background:var(--green-deep);
+    border-radius:999px;
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:10px;
+    box-shadow:0 14px 26px -10px rgba(11,93,52,0.55);
+  }
+  .web-hotbar.active{ display:flex; }
+  .web-hotbar button{
+    flex:1;
+    border:none;
+    background:none;
+    cursor:pointer;
+    height:46px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    color:#eef4ef;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    padding:0 16px;
+  }
+  .web-hotbar button svg{width:18px;height:18px; stroke:currentColor; fill:none; stroke-width:1.9;}
+  .web-hotbar button.selected{background:rgba(255,255,255,0.12);}
+
+  /* web login */
+  .web-login-grid{ display:grid; grid-template-columns:1fr 1fr; min-height:636px; }
+  .web-login-side{
+    background:linear-gradient(160deg, var(--green-deep), #0d3f24);
+    color:#eef4ef; display:flex; flex-direction:column; justify-content:center; padding:56px;
+    min-height:100vh;
+  }
+  .web-login-side .logo{font-size:34px; margin-bottom:18px; color:#fff;}
+  .web-login-side .logo span{background:rgba(255,255,255,0.16); color:#fff;}
+  .web-login-side p{font-size:14.5px; line-height:1.6; color:#d8eadf; opacity:.85; max-width:320px;}
+  .web-login-form{ display:flex; flex-direction:column; justify-content:center; padding:56px 72px; gap:14px; min-height:100vh; }
+  .web-login-form h1{font-family:'Space Grotesk',sans-serif; font-size:24px; margin:0 0 6px 0;}
+  .web-login-form .muted-line{color:var(--muted); font-size:13.5px; margin-bottom:18px;}
+  .web-field{ border:1.5px solid #e1e4dd; border-radius:var(--radius-sm); padding:13px 16px; font-size:14px; background:#fbfcfa; }
+  .web-actions{display:flex; gap:12px; margin-top:6px;}
+  .web-actions .btn{flex:1;}
+
+  /* generic web page padding wrapper */
+  .web-page{ max-width:960px; margin:0 auto; padding:36px 40px 60px; }
+  .web-heading{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:22px; margin:0 0 4px;}
+  .web-subheading{color:var(--muted); font-size:13.5px; margin:0 0 26px;}
+
+  /* web evaluation */
+  .web-eval-grid{ display:grid; grid-template-columns:1.1fr 1.4fr; gap:28px; align-items:start; }
+  .web-map-card{
+    border-radius:var(--radius-md); overflow:hidden; border:1px solid #e7e9e3; height:340px; position:relative;
+  }
+  .web-eval-table{border:1px solid #e7e9e3; border-radius:var(--radius-md); overflow:hidden; background:#fff;}
+
+  /* web search */
+  .web-search-grid{ display:grid; grid-template-columns:var(--web-side-width) 1fr; gap:0; min-height:100vh; }
+  .web-search-panel{ padding:36px 32px; border-right:1px solid #eceee6; }
+  .web-search-panel h2{font-family:'Space Grotesk',sans-serif; font-size:18px; margin:0 0 18px;}
+  .web-map-pane{ position:relative; min-height:100vh; }
+
+  /* web results */
+  .web-results-layout{ display:grid; grid-template-columns:var(--web-side-width) 1fr; min-height:100vh; }
+  .web-results-panel{ padding:36px 32px; border-right:1px solid #eceee6; overflow-y:auto; }
+  .web-results-panel .web-heading{ margin-bottom:6px; }
+  .web-results-panel .web-subheading{ margin-bottom:18px; }
+  .web-results-grid{ display:grid; grid-template-columns:1fr; gap:14px; }
+  .web-ride-card{ display:flex; align-items:center; gap:14px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
+    padding:16px; background:#fff; }
+  .web-ride-card button{ margin-left:auto; }
+  .web-results-map{ position:relative; min-height:100vh; }
+
+  /* web create form */
+  .web-form-grid{ display:grid; grid-template-columns:200px 1fr; gap:22px 24px; align-items:center; max-width:560px; }
+  .web-form-grid label{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;}
+
+  /* web upcoming table */
+  .web-table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid #e9ebe4; border-radius:var(--radius-md); overflow:hidden; }
+  .web-table th{ text-align:left; font-family:'Space Grotesk',sans-serif; font-size:12.5px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--muted); padding:14px 18px; border-bottom:1px solid #eceee6; background:#f8f9f5;}
+  .web-table td{ padding:14px 18px; border-bottom:1px solid #f0f1eb; font-size:14px; }
+  .web-table tr:last-child td{border-bottom:none;}
+  .web-trips-layout{ display:grid; grid-template-columns:var(--web-side-width) 1fr; min-height:100vh; }
+  .web-trips-panel{ padding:36px 32px; border-right:1px solid #eceee6; overflow-y:auto; }
+  .web-trips-panel .web-heading{ margin-bottom:6px; }
+  .web-trips-panel .web-subheading{ margin-bottom:18px; }
+  .web-trips-map{ position:relative; min-height:100vh; }
+  .web-trip-cards{ display:flex; flex-direction:column; gap:12px; }
+  .web-trip-card{ display:flex; align-items:center; gap:14px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
+    padding:16px; background:#fff; }
+  .web-trip-mid{ flex:1; min-width:0; }
+  .web-trip-kind{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px; }
+  .web-trip-meta{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .web-trip-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--green-deep); font-size:14px; }
+
+  /* web profile */
+  .web-profile-grid{ display:grid; grid-template-columns:var(--web-side-width) 1fr; gap:32px; }
+  .web-profile-side{ border:1px solid #e9ebe4; border-radius:var(--radius-md); padding:24px 18px; background:#fff;
+    display:flex; flex-direction:column; align-items:center; }
+  .web-profile-side .profile-name{margin-top:12px;}
+  .web-profile-menu{ margin-top:24px; width:100%; display:flex; flex-direction:column; gap:6px; }
+  .web-profile-menu button{ display:flex; align-items:center; gap:10px; border:none; background:none; text-align:left;
+    padding:10px 12px; border-radius:8px; cursor:pointer; font-size:13.5px; font-weight:500; color:var(--ink-soft); width:100%; }
+  .web-profile-menu button.selected{background:var(--green-soft); color:var(--green-deep);}
+  .web-profile-menu button svg{width:16px;height:16px; stroke:currentColor; fill:none; stroke-width:1.8;}
+  .web-profile-content{ border:1px solid #e9ebe4; border-radius:var(--radius-md); padding:28px; background:#fff; }
+  .web-profile-content h3{font-family:'Space Grotesk',sans-serif; margin-top:0;}
+  .web-info-row{ display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f0f1eb; font-size:14px; }
+  .web-info-row:last-child{border-bottom:none;}
+  .web-info-row span:first-child{color:var(--muted);}
+
+  footer.credit{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="toolbar-title"><span class="dot"></span> TrajÉTS — Prototype</div>
+  <div class="view-switch">
+    <button id="btn-mobile" onclick="setView('mobile')">
+      <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="10" y1="19" x2="14" y2="19"/></svg>
+      Mobile
+    </button>
+    <button id="btn-web" onclick="setView('web')">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="18" x2="12" y2="21"/></svg>
+      Web
+    </button>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ======================= MOBILE VIEW ======================= -->
+  <div id="view-mobile">
+    <div class="phone">
+      <div class="notch"></div>
+
+      <!-- LOGIN -->
+      <div class="screen active" data-screen="login">
+        <div class="login-wrap">
+          <div class="logo">Traj<span>ÉTS</span></div>
+          <h1 class="login-title">Connexion</h1>
+          <div class="field">Nom d'utilisateur</div>
+          <div class="field">Mot de passe</div>
+          <div class="login-actions">
+            <button class="btn btn-primary" onclick="go('search')">Se connecter</button>
+            <button class="btn btn-outline" onclick="go('review')">S'inscrire</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEW -->
+      <div class="screen" data-screen="review">
+        <div class="map-layer" id="map-review-m"></div>
+        <div class="eval-card">
+          <button class="eval-card-close" onclick="go('search')">
+            <svg viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+          </button>
+          <h2 class="eval-title">Évaluation</h2>
+          <div class="eval-sub"><div class="route">MTL → Qc</div><div class="date">20 octobre</div></div>
+          <div class="eval-table" id="eval-table-m"></div>
+          <button class="btn btn-primary" style="width:100%; margin-top:18px;" onclick="go('search')">Enregistrer</button>
+        </div>
+        <div class="bottom-nav">
+          <button onclick="go('search')"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></button>
+          <button onclick="go('upcoming')"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+          <button onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg></button>
+        </div>
+      </div>
+
+      <!-- SEARCH -->
+      <div class="screen" data-screen="search">
+        <div class="map-layer" id="map-search-m"></div>
+        <div class="search-card">
+          <div class="mode-toggle">
+            <button class="selected" data-mode="passenger" onclick="setMode('passenger')">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>
+            </button>
+            <button data-mode="driver" onclick="setMode('driver')">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>
+            </button>
+          </div>
+          <div class="field select">Départ <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="field select">Arrivée <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="field select">Date <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <button class="btn btn-primary" style="width:100%" onclick="goSearch()">Go !</button>
+        </div>
+        <div class="bottom-nav">
+          <button onclick="go('search')"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></button>
+          <button onclick="go('upcoming')"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+          <button onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg></button>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="screen" data-screen="results">
+        <div class="list-header"><div class="list-title">MTL → Qc</div><div class="list-sub">20 octobre</div></div>
+        <div class="list-body scroll-area" id="results-list-m"></div>
+        <div class="bottom-nav">
+          <button onclick="go('search')"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></button>
+          <button onclick="go('upcoming')"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+          <button onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg></button>
+        </div>
+      </div>
+
+      <!-- CREATE -->
+      <div class="screen" data-screen="create">
+        <div class="form-header"><div class="list-title">MTL → Qc</div><div class="list-sub">20 octobre</div></div>
+        <div class="form-body scroll-area">
+          <div class="form-group"><label>Prix</label>
+            <div class="price-field"><span>$</span><input type="text" placeholder="0" disabled></div>
+          </div>
+          <div class="form-group"><label>Bagages</label>
+            <div class="pill-group">
+              <div class="pill" onclick="selectPill(this)">1</div>
+              <div class="pill selected" onclick="selectPill(this)">2</div>
+              <div class="pill" onclick="selectPill(this)">3</div>
+            </div>
+          </div>
+          <div class="form-group"><label>Animaux</label>
+            <div class="toggle-group">
+              <div class="toggle-btn yes selected" onclick="selectToggle(this)"><svg viewBox="0 0 24 24"><polyline points="4 12 9 17 20 6"/></svg></div>
+              <div class="toggle-btn no" onclick="selectToggle(this)"><svg viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg></div>
+            </div>
+          </div>
+          <div class="form-group"><label>Places</label>
+            <div class="pill-group">
+              <div class="pill" onclick="selectPill(this)">1</div>
+              <div class="pill" onclick="selectPill(this)">2</div>
+              <div class="pill selected" onclick="selectPill(this)">3</div>
+              <div class="pill" onclick="selectPill(this)">4</div>
+              <div class="pill" onclick="selectPill(this)">5</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary form-save" onclick="go('upcoming')">Enregistrer</button>
+        <div class="bottom-nav">
+          <button onclick="go('search')"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></button>
+          <button onclick="go('upcoming')"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+          <button onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg></button>
+        </div>
+      </div>
+
+      <!-- UPCOMING -->
+      <div class="screen" data-screen="upcoming">
+        <div class="list-header"><div class="list-title">À venir</div></div>
+        <div class="list-body scroll-area">
+          <div class="upc-row">
+            <div class="upc-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></div>
+            <div class="upc-mid"><div class="upc-route">MTL → Qc</div><div class="upc-date">20 oct. · 14h</div></div>
+            <div class="upc-price">$</div>
+          </div>
+          <div class="upc-row">
+            <div class="upc-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="2.6"/><path d="M4 20c0-3 2.2-5.3 5-5.3s5 2.3 5 5.3"/></svg></div>
+            <div class="upc-mid"><div class="upc-route">Qc → MTL</div><div class="upc-date">25 oct.</div></div>
+            <div class="upc-price">$</div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button onclick="go('search')"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></button>
+          <button onclick="go('upcoming')"><svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+          <button onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg></button>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="screen" data-screen="profile">
+        <button class="back-arrow" onclick="go('search')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <div class="profile-top">
+          <div class="avatar-wrap">
+            <div class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></div>
+            <div class="avatar-edit"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          </div>
+          <div class="profile-name">Nom Utilisateur</div>
+        </div>
+        <div class="profile-list">
+          <div class="profile-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Paramètres</span></div>
+          <div class="profile-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg><span>Thème</span></div>
+        </div>
+        <button class="btn logout-btn" onclick="go('login')"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Déconnexion</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================= WEB VIEW ======================= -->
+  <div id="view-web">
+    <div class="browser-frame">
+      <div class="browser-topbar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">
+          <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <span id="url-text">trajets-ets.app/connexion</span>
+        </div>
+      </div>
+
+      <div class="site-nav" id="site-nav" style="display:none;">
+        <div class="site-logo">Traj<span>ÉTS</span></div>
+        <div class="site-links">
+          <button data-nav="search" onclick="go('search')">Rechercher</button>
+          <button data-nav="upcoming" onclick="go('upcoming')">Mes trajets</button>
+        </div>
+        <div class="site-right">
+          <button class="site-avatar-btn" onclick="go('profile')">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="web-hotbar" id="web-hotbar">
+        <button data-nav="search" onclick="go('search')">
+          <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg>
+          Recherche
+        </button>
+        <button data-nav="upcoming" onclick="go('upcoming')">
+          <svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+          Mes trajets
+        </button>
+        <button data-nav="profile" onclick="go('profile')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg>
+          Profil
+        </button>
+      </div>
+
+      <div class="web-body">
+
+        <!-- WEB LOGIN -->
+        <div class="web-screen active" data-screen="login">
+          <div class="web-login-grid">
+            <div class="web-login-side">
+              <div class="logo">Traj<span>ÉTS</span></div>
+              <p>Le covoiturage entre étudiants de l'ÉTS pour vos trajets Montréal ↔ Québec. Partagez la route, partagez les frais.</p>
+            </div>
+            <div class="web-login-form">
+              <h1>Connexion</h1>
+              <div class="muted-line">Accédez à votre compte TrajÉTS</div>
+              <div class="web-field">Nom d'utilisateur</div>
+              <div class="web-field">Mot de passe</div>
+              <div class="web-actions">
+                <button class="btn btn-primary" onclick="go('search')">Se connecter</button>
+                <button class="btn btn-outline" onclick="go('review')">S'inscrire</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEB REVIEW -->
+        <div class="web-screen" data-screen="review">
+          <div class="web-page">
+            <h1 class="web-heading">Évaluation du trajet</h1>
+            <div class="web-subheading">MTL → Qc · 20 octobre</div>
+            <div class="web-eval-grid">
+              <div class="web-map-card"><div class="map-layer" id="map-review-w"></div></div>
+              <div>
+                <div class="web-eval-table" id="eval-table-w"></div>
+                <button class="btn btn-primary" style="margin-top:18px;" onclick="go('search')">Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEB SEARCH -->
+        <div class="web-screen" data-screen="search">
+          <div class="web-search-grid">
+            <div class="web-search-panel">
+              <h2>Trouver un trajet</h2>
+              <div class="mode-toggle">
+                <button class="selected" data-mode="passenger" onclick="setMode('passenger')">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>
+                </button>
+                <button data-mode="driver" onclick="setMode('driver')">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>
+                </button>
+              </div>
+              <div class="field select">Départ <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+              <div class="field select">Arrivée <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+              <div class="field select">Date <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+              <button class="btn btn-primary" style="width:100%" onclick="goSearch()">Go !</button>
+            </div>
+            <div class="web-map-pane"><div class="map-layer" id="map-search-w"></div></div>
+          </div>
+        </div>
+
+        <!-- WEB RESULTS -->
+        <div class="web-screen" data-screen="results">
+          <div class="web-results-layout">
+            <div class="web-results-panel">
+              <h1 class="web-heading">Trajets disponibles</h1>
+              <div class="web-subheading">MTL → Qc · 20 octobre</div>
+              <div class="web-results-grid" id="results-list-w"></div>
+            </div>
+            <div class="web-results-map"><div class="map-layer" id="map-results-w"></div></div>
+          </div>
+        </div>
+
+        <!-- WEB CREATE -->
+        <div class="web-screen" data-screen="create">
+          <div class="web-page">
+            <h1 class="web-heading">Publier un trajet</h1>
+            <div class="web-subheading">MTL → Qc · 20 octobre</div>
+            <div class="web-form-grid">
+              <label>Prix</label>
+              <div class="price-field"><span>$</span><input type="text" placeholder="0" disabled></div>
+
+              <label>Bagages</label>
+              <div class="pill-group">
+                <div class="pill" onclick="selectPill(this)">1</div>
+                <div class="pill selected" onclick="selectPill(this)">2</div>
+                <div class="pill" onclick="selectPill(this)">3</div>
+              </div>
+
+              <label>Animaux</label>
+              <div class="toggle-group">
+                <div class="toggle-btn yes selected" onclick="selectToggle(this)"><svg viewBox="0 0 24 24"><polyline points="4 12 9 17 20 6"/></svg></div>
+                <div class="toggle-btn no" onclick="selectToggle(this)"><svg viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg></div>
+              </div>
+
+              <label>Places</label>
+              <div class="pill-group">
+                <div class="pill" onclick="selectPill(this)">1</div>
+                <div class="pill" onclick="selectPill(this)">2</div>
+                <div class="pill selected" onclick="selectPill(this)">3</div>
+                <div class="pill" onclick="selectPill(this)">4</div>
+                <div class="pill" onclick="selectPill(this)">5</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:28px;" onclick="go('upcoming')">Enregistrer</button>
+          </div>
+        </div>
+
+        <!-- WEB UPCOMING -->
+        <div class="web-screen" data-screen="upcoming">
+          <div class="web-trips-layout">
+            <div class="web-trips-panel">
+              <h1 class="web-heading">Mes trajets à venir</h1>
+              <div class="web-subheading">Vos trajets planifiés et réservations</div>
+              <div class="web-trip-cards">
+                <div class="web-trip-card">
+                  <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></div>
+                  <div class="web-trip-mid">
+                    <div class="web-trip-kind">Conducteur · MTL → Qc</div>
+                    <div class="web-trip-meta">20 oct. · 14h</div>
+                  </div>
+                  <div class="web-trip-price">$</div>
+                </div>
+                <div class="web-trip-card">
+                  <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg></div>
+                  <div class="web-trip-mid">
+                    <div class="web-trip-kind">Passager · Qc → MTL</div>
+                    <div class="web-trip-meta">25 oct.</div>
+                  </div>
+                  <div class="web-trip-price">$</div>
+                </div>
+              </div>
+            </div>
+            <div class="web-trips-map"><div class="map-layer" id="map-upcoming-w"></div></div>
+          </div>
+        </div>
+
+        <!-- WEB PROFILE -->
+        <div class="web-screen" data-screen="profile">
+          <div class="web-page">
+            <h1 class="web-heading">Profil</h1>
+            <div class="web-profile-grid">
+              <div class="web-profile-side">
+                <div class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></div>
+                <div class="profile-name">Nom Utilisateur</div>
+                <div class="web-profile-menu">
+                  <button class="selected"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg>Profil</button>
+                  <button><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>Paramètres</button>
+                  <button><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>Thème</button>
+                  <button onclick="go('login')" style="color:var(--danger);"><svg viewBox="0 0 24 24" style="stroke:var(--danger);"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Déconnexion</button>
+                </div>
+              </div>
+              <div class="web-profile-content">
+                <h3>Informations du compte</h3>
+                <div class="web-info-row"><span>Nom</span><span>Nom Utilisateur</span></div>
+                <div class="web-info-row"><span>Courriel</span><span>utilisateur@etsmtl.net</span></div>
+                <div class="web-info-row"><span>Note moyenne</span><span>4.8 / 5</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer class="credit">TrajÉTS — prototype de navigation (aucune logique métier réelle)</footer>
+
+<script>
+  let currentScreen = 'login';
+  let mode = 'passenger';
+  let viewMode = 'mobile';
+
+  const urlMap = {
+    login:'trajets-ets.app/connexion',
+    review:'trajets-ets.app/evaluation',
+    search:'trajets-ets.app/recherche',
+    results:'trajets-ets.app/recherche/resultats',
+    create:'trajets-ets.app/publier',
+    upcoming:'trajets-ets.app/trajets',
+    profile:'trajets-ets.app/profil'
+  };
+
+  function go(name){
+    currentScreen = name;
+    document.querySelectorAll('[data-screen]').forEach(el=>{
+      el.classList.toggle('active', el.dataset.screen === name);
+    });
+    document.getElementById('url-text').textContent = urlMap[name] || 'trajets-ets.app';
+    document.getElementById('web-hotbar').classList.toggle('active', name !== 'login');
+    document.querySelectorAll('.web-hotbar button').forEach(b=>{
+      b.classList.toggle('selected', b.dataset.nav === name || (name==='results' && b.dataset.nav==='search') || (name==='create' && b.dataset.nav==='search'));
+    });
+    if(name === 'results') buildResults();
+  }
+
+  function setMode(m){
+    mode = m;
+    document.querySelectorAll('[data-mode]').forEach(b=>{
+      b.classList.toggle('selected', b.dataset.mode === m);
+    });
+  }
+
+  function goSearch(){
+    if(mode === 'passenger'){ go('results'); } else { go('create'); }
+  }
+
+  function buildResults(){
+    const prices = [40, 20, 15, 50, 100, 5, 10];
+    const rowHTML = (p) => `
+      <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg></div>
+      <div class="ride-name"></div>
+      <div class="ride-price">${p} $</div>`;
+
+    const listM = document.getElementById('results-list-m');
+    listM.innerHTML = '';
+    prices.forEach(p=>{
+      const row = document.createElement('div');
+      row.className = 'ride-row';
+      row.innerHTML = rowHTML(p);
+      listM.appendChild(row);
+    });
+
+    const listW = document.getElementById('results-list-w');
+    listW.innerHTML = '';
+    prices.forEach(p=>{
+      const row = document.createElement('div');
+      row.className = 'web-ride-card';
+      row.innerHTML = `
+        <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg></div>
+        <div class="ride-name"></div>
+        <div class="ride-price">${p} $</div>
+        <button class="btn btn-outline" onclick="go('review')">Réserver</button>`;
+      listW.appendChild(row);
+    });
+  }
+
+  function selectPill(el){
+    el.parentElement.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+  function selectToggle(el){
+    el.parentElement.querySelectorAll('.toggle-btn').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function evalRowHTML(kind, anon){
+    const icon = kind === 'driver'
+      ? `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>`
+      : `<svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>`;
+    const starFill = `<svg class="star-fill" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>`;
+    const starEmpty = `<svg class="star-empty" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>`;
+    const stars = kind === 'driver'
+      ? starFill+starFill+starFill+starFill+starEmpty
+      : starFill+starFill+starFill+starFill+starFill;
+    const nameHTML = anon ? `<div class="eval-name anon"></div>` : `<div class="eval-name">John Smith</div>`;
+    return `<div class="eval-row">
+      <div class="eval-icon">${icon}</div>
+      ${nameHTML}
+      <div class="stars">${stars}</div>
+      <svg class="check-ok" viewBox="0 0 24 24"><polyline points="4 12 9 17 20 6"/></svg>
+    </div>`;
+  }
+  const evalRows = evalRowHTML('driver', false) + evalRowHTML('passenger', true) + evalRowHTML('passenger', true);
+  document.getElementById('eval-table-m').innerHTML = evalRows;
+  document.getElementById('eval-table-w').innerHTML = evalRows;
+
+  function mapSVG(){
+    return `
+    <svg viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice">
+      <rect width="360" height="700" fill="var(--map-bg)"/>
+      <g transform="translate(28 34) scale(0.7)">
+      <g stroke="var(--map-line)" stroke-width="3">
+        <line x1="0" y1="120" x2="360" y2="60"/>
+        <line x1="0" y1="260" x2="360" y2="210"/>
+        <line x1="0" y1="420" x2="360" y2="380"/>
+        <line x1="0" y1="560" x2="360" y2="530"/>
+        <line x1="60" y1="0" x2="20" y2="700"/>
+        <line x1="160" y1="0" x2="130" y2="700"/>
+        <line x1="260" y1="0" x2="300" y2="700"/>
+      </g>
+      <g stroke="var(--map-line-strong)" stroke-width="5">
+        <line x1="300" y1="0" x2="255" y2="700"/>
+      </g>
+      <path d="M70 140 L70 260 L230 400 L230 460" stroke="var(--green-deep)" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="230" cy="460" r="7" fill="#161a17"/>
+      </g>
+    </svg>`;
+  }
+  ['map-review-m','map-search-m','map-review-w','map-search-w','map-results-w','map-upcoming-w'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = mapSVG();
+  });
+
+  function placeTags(mapId, tags){
+    const layer = document.getElementById(mapId);
+    if(!layer) return;
+    tags.forEach(tg => {
+      const d = document.createElement('div');
+      d.className = 'map-tag' + (tg.strong ? ' strong' : '');
+      d.style.left = tg.x; d.style.top = tg.y;
+      d.textContent = tg.t;
+      layer.appendChild(d);
+    });
+  }
+  const tagsReview = [
+    {t:'Montréal', x:'34%', y:'28%', strong:true},
+    {t:'VILLE-MARIE', x:'30%', y:'36%'},
+    {t:'GRIFFINTOWN', x:'46%', y:'54%'},
+    {t:'ÉTS, Pavillon A', x:'58%', y:'50%'},
+  ];
+  const tagsSearch = [
+    {t:'Montréal', x:'34%', y:'40%', strong:true},
+    {t:'GRIFFINTOWN', x:'44%', y:'64%'},
+  ];
+  const sharedTags = tagsReview;
+  placeTags('map-review-m', sharedTags);
+  placeTags('map-search-m', sharedTags);
+  placeTags('map-review-w', sharedTags);
+  placeTags('map-search-w', sharedTags);
+  placeTags('map-results-w', sharedTags);
+  placeTags('map-upcoming-w', sharedTags);
+
+  function setView(v){
+    viewMode = v;
+    document.getElementById('view-mobile').style.display = (v === 'mobile') ? 'flex' : 'none';
+    document.getElementById('view-web').style.display = (v === 'web') ? 'flex' : 'none';
+    document.getElementById('btn-mobile').classList.toggle('active', v === 'mobile');
+    document.getElementById('btn-web').classList.toggle('active', v === 'web');
+  }
+  setView('web');
+  go('login');
+</script>
+</body>
+</html>
