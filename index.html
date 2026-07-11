@@ -11,7 +11,7 @@
     --green-deep:#0b5d34;
     --green:#12793f;
     --green-soft:#dcefdf;
-    --web-side-width:360px;
+    --web-side-width:440px;
     --ink:#161a17;
     --ink-soft:#4d564e;
     --muted:#8b948b;
@@ -115,8 +115,9 @@
   .eval-sub .route{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:16px; }
   .eval-sub .date{ color:var(--muted); font-size:12.5px; margin-top:2px; }
   .eval-table{ border:1px solid #e7e9e3; border-radius:var(--radius-sm); overflow:hidden; }
-  .eval-row{ display:flex; align-items:center; gap:12px; padding:12px; border-bottom:1px solid #eef0ea; }
+  .eval-row{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:12px; padding:12px; border-bottom:1px solid #eef0ea; }
   .eval-row:last-child{ border-bottom:none; }
+  .eval-row-main{ display:flex; align-items:center; gap:12px; flex:1 1 100%; min-width:0; }
   .eval-icon{ width:34px;height:34px; border-radius:50%; background:var(--green-soft);
     display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .eval-icon svg{width:18px;height:18px; stroke:var(--green-deep); fill:none; stroke-width:1.7;}
@@ -128,6 +129,15 @@
   .star-fill{fill:var(--star); stroke:var(--star); stroke-width:1;}
   .star-empty{fill:none; stroke:var(--star); stroke-width:1.3;}
   .check-ok{width:16px;height:16px; stroke:var(--green-deep); stroke-width:2.4; fill:none; flex-shrink:0;}
+  .eval-comment-toggle{ width:28px; height:28px; border:none; border-radius:50%; background:#f0f2ec; color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .eval-comment-toggle svg{width:16px;height:16px; stroke:currentColor; fill:none; stroke-width:2.2; transition:transform .15s ease;}
+  .eval-row.comment-open .eval-comment-toggle svg{transform:rotate(180deg);}
+  .eval-comment-panel{ display:none; flex:1 1 100%; }
+  .eval-row.comment-open .eval-comment-panel{ display:block; }
+  .eval-comment-panel textarea{ width:100%; min-height:70px; resize:none; border:1px solid #dfe3d7; border-radius:var(--radius-sm);
+    padding:10px 12px; font:inherit; font-size:13px; color:var(--ink); background:#fbfcfa; outline:none; }
+  .eval-comment-panel textarea::placeholder{ color:var(--muted); }
 
   .search-card{ position:absolute; top:88px; left:18px; right:18px; background:var(--paper);
     border-radius:var(--radius-lg); box-shadow:var(--shadow-card); padding:18px 18px 20px; z-index:15; }
@@ -146,8 +156,9 @@
   .ride-icon{ width:38px;height:38px; border-radius:50%; background:var(--green-soft); display:flex;
     align-items:center; justify-content:center; flex-shrink:0; }
   .ride-icon svg{width:19px;height:19px; stroke:var(--green-deep); fill:none; stroke-width:1.7;}
-  .ride-name{ flex:1; height:10px; border-radius:5px;
-    background:repeating-linear-gradient(100deg, #dde1d6 0 10px, transparent 10px 13px); }
+  .ride-mid{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .ride-route{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px; line-height:1.2; }
+  .ride-meta{ color:var(--muted); font-size:11.5px; }
   .ride-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:var(--green-deep); flex-shrink:0; }
 
   .form-header{padding:56px 22px 10px;}
@@ -155,9 +166,9 @@
   .form-group label{ display:block; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px;
     margin-bottom:9px; color:var(--ink); }
   .price-field{ display:flex; align-items:center; gap:8px; border:1.5px solid #e1e4dd; border-radius:var(--radius-sm);
-    padding:12px 16px; width:130px; }
+    padding:12px 16px; width:130px; background:#fff; }
   .price-field span{font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--green-deep);}
-  .price-field input{border:none; outline:none; width:100%; font-size:14px; background:none;}
+  .price-field input{border:none; outline:none; width:100%; font-size:14px; background:none; color:var(--ink);}
   .pill-group{display:flex; gap:8px;}
   .pill{ width:42px; height:42px; border-radius:50%; border:1.5px solid #e1e4dd; background:#fff; display:flex;
     align-items:center; justify-content:center; font-weight:600; font-size:14px; cursor:pointer; transition:all .12s ease; }
@@ -171,6 +182,12 @@
   .toggle-btn.no.selected{background:#fbeceb; border-color:var(--danger);}
   .toggle-btn.no.selected svg{stroke:var(--danger);}
   .toggle-btn:not(.selected) svg{stroke:#b7bcb0;}
+  .note-field{ grid-column:1 / -1; }
+  .note-field textarea{
+    width:100%; min-height:96px; resize:vertical; border:1.5px solid #e1e4dd; border-radius:var(--radius-sm);
+    padding:12px 16px; font:inherit; font-size:14px; color:var(--ink); background:#fff; outline:none; resize:none;
+  }
+  .note-field textarea::placeholder{ color:var(--muted); }
   .form-save{position:absolute; left:22px; right:22px; bottom:96px;}
 
   .upc-row{ display:flex; align-items:center; gap:12px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
@@ -328,10 +345,55 @@
   .web-results-panel .web-heading{ margin-bottom:6px; }
   .web-results-panel .web-subheading{ margin-bottom:18px; }
   .web-results-grid{ display:grid; grid-template-columns:1fr; gap:14px; }
-  .web-ride-card{ display:flex; align-items:center; gap:14px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
+  .web-ride-card{ display:flex; align-items:flex-start; gap:14px; border:1px solid #e9ebe4; border-radius:var(--radius-md);
     padding:16px; background:#fff; }
-  .web-ride-card button{ margin-left:auto; }
+  .web-ride-mid{ flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+  .web-ride-route{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15px; line-height:1.2; }
+  .web-ride-meta{ color:var(--muted); font-size:12.5px; }
+  .web-ride-pills{ display:flex; flex-wrap:wrap; gap:6px; }
+  .web-ride-pill{ padding:5px 9px; border-radius:999px; background:#f3f5f0; color:var(--ink-soft); font-size:11.5px; font-weight:600; }
+  .web-ride-cta{ margin-left:auto; align-self:center; white-space:nowrap; }
   .web-results-map{ position:relative; min-height:100vh; }
+
+  .confirm-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(14, 18, 15, 0.42);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:60;
+    backdrop-filter:blur(4px);
+  }
+  .confirm-overlay.active{ display:flex; }
+  .confirm-modal{
+    width:min(420px, 100%);
+    background:var(--paper);
+    border-radius:var(--radius-lg);
+    box-shadow:0 24px 60px -20px rgba(11,30,18,0.35);
+    border:1px solid rgba(255,255,255,0.55);
+    padding:24px 22px 22px;
+  }
+  .confirm-modal h2{
+    margin:0 0 10px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px;
+  }
+  .confirm-modal p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:14px;
+    line-height:1.55;
+  }
+  .confirm-actions{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+  }
+  .confirm-actions .btn{
+    flex:1;
+  }
 
   /* web create form */
   .web-form-grid{ display:grid; grid-template-columns:200px 1fr; gap:22px 24px; align-items:center; max-width:560px; }
@@ -407,7 +469,7 @@
           <div class="field">Mot de passe</div>
           <div class="login-actions">
             <button class="btn btn-primary" onclick="go('search')">Se connecter</button>
-            <button class="btn btn-outline" onclick="go('review')">S'inscrire</button>
+            <button class="btn btn-outline" onclick="go('search')">S'inscrire</button>
           </div>
         </div>
       </div>
@@ -420,7 +482,7 @@
             <svg viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
           </button>
           <h2 class="eval-title">Évaluation</h2>
-          <div class="eval-sub"><div class="route">MTL → Qc</div><div class="date">20 octobre</div></div>
+          <div class="eval-sub"><div class="route">MTL → QC</div><div class="date">20 octobre</div></div>
           <div class="eval-table" id="eval-table-m"></div>
           <button class="btn btn-primary" style="width:100%; margin-top:18px;" onclick="go('search')">Enregistrer</button>
         </div>
@@ -445,7 +507,7 @@
           </div>
           <div class="field select">Départ <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
           <div class="field select">Arrivée <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
-          <div class="field select">Date <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="field select">Date et Heure<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
           <button class="btn btn-primary" style="width:100%" onclick="goSearch()">Go !</button>
         </div>
         <div class="bottom-nav">
@@ -457,7 +519,7 @@
 
       <!-- RESULTS -->
       <div class="screen" data-screen="results">
-        <div class="list-header"><div class="list-title">MTL → Qc</div><div class="list-sub">20 octobre</div></div>
+        <div class="list-header"><div class="list-title">MTL → QC</div><div class="list-sub">20 octobre</div></div>
         <div class="list-body scroll-area" id="results-list-m"></div>
         <div class="bottom-nav">
           <button onclick="go('search')"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></button>
@@ -468,10 +530,10 @@
 
       <!-- CREATE -->
       <div class="screen" data-screen="create">
-        <div class="form-header"><div class="list-title">MTL → Qc</div><div class="list-sub">20 octobre</div></div>
+        <div class="form-header"><div class="list-title">MTL → QC</div><div class="list-sub">20 octobre</div></div>
         <div class="form-body scroll-area">
           <div class="form-group"><label>Prix</label>
-            <div class="price-field"><span>$</span><input type="text" placeholder="0" disabled></div>
+            <div class="price-field"><span>$</span><input type="text" disabled></div>
           </div>
           <div class="form-group"><label>Bagages</label>
             <div class="pill-group">
@@ -510,12 +572,12 @@
         <div class="list-body scroll-area">
           <div class="upc-row">
             <div class="upc-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></div>
-            <div class="upc-mid"><div class="upc-route">MTL → Qc</div><div class="upc-date">20 oct. · 14h</div></div>
+            <div class="upc-mid"><div class="upc-route">MTL → QC</div><div class="upc-date">20 oct. · 14h</div></div>
             <div class="upc-price">$</div>
           </div>
           <div class="upc-row">
             <div class="upc-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="2.6"/><path d="M4 20c0-3 2.2-5.3 5-5.3s5 2.3 5 5.3"/></svg></div>
-            <div class="upc-mid"><div class="upc-route">Qc → MTL</div><div class="upc-date">25 oct.</div></div>
+            <div class="upc-mid"><div class="upc-route">QC → MTL</div><div class="upc-date">25 oct. · 18h</div></div>
             <div class="upc-price">$</div>
           </div>
         </div>
@@ -601,7 +663,7 @@
               <div class="web-field">Mot de passe</div>
               <div class="web-actions">
                 <button class="btn btn-primary" onclick="go('search')">Se connecter</button>
-                <button class="btn btn-outline" onclick="go('review')">S'inscrire</button>
+                <button class="btn btn-outline" onclick="go('search')">S'inscrire</button>
               </div>
             </div>
           </div>
@@ -611,7 +673,7 @@
         <div class="web-screen" data-screen="review">
           <div class="web-page">
             <h1 class="web-heading">Évaluation du trajet</h1>
-            <div class="web-subheading">MTL → Qc · 20 octobre</div>
+            <div class="web-subheading">MTL → QC · 20 octobre · 14h</div>
             <div class="web-eval-grid">
               <div class="web-map-card"><div class="map-layer" id="map-review-w"></div></div>
               <div>
@@ -637,7 +699,7 @@
               </div>
               <div class="field select">Départ <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
               <div class="field select">Arrivée <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
-              <div class="field select">Date <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+              <div class="field select">Date et Heure<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
               <button class="btn btn-primary" style="width:100%" onclick="goSearch()">Go !</button>
             </div>
             <div class="web-map-pane"><div class="map-layer" id="map-search-w"></div></div>
@@ -649,7 +711,7 @@
           <div class="web-results-layout">
             <div class="web-results-panel">
               <h1 class="web-heading">Trajets disponibles</h1>
-              <div class="web-subheading">MTL → Qc · 20 octobre</div>
+              <div class="web-subheading">MTL → QC · 20 octobre · 14h</div>
               <div class="web-results-grid" id="results-list-w"></div>
             </div>
             <div class="web-results-map"><div class="map-layer" id="map-results-w"></div></div>
@@ -660,10 +722,10 @@
         <div class="web-screen" data-screen="create">
           <div class="web-page">
             <h1 class="web-heading">Publier un trajet</h1>
-            <div class="web-subheading">MTL → Qc · 20 octobre</div>
+            <div class="web-subheading">MTL → QC · 20 octobre · 14h</div>
             <div class="web-form-grid">
               <label>Prix</label>
-              <div class="price-field"><span>$</span><input type="text" placeholder="0" disabled></div>
+              <div class="price-field"><span>$</span><input type="text" disabled></div>
 
               <label>Bagages</label>
               <div class="pill-group">
@@ -686,6 +748,11 @@
                 <div class="pill" onclick="selectPill(this)">4</div>
                 <div class="pill" onclick="selectPill(this)">5</div>
               </div>
+
+              <label>Note</label>
+              <div class="note-field">
+                <textarea placeholder="Ajouter une note..." disabled></textarea>
+              </div>
             </div>
             <button class="btn btn-primary" style="margin-top:28px;" onclick="go('upcoming')">Enregistrer</button>
           </div>
@@ -701,7 +768,7 @@
                 <div class="web-trip-card">
                   <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg></div>
                   <div class="web-trip-mid">
-                    <div class="web-trip-kind">Conducteur · MTL → Qc</div>
+                    <div class="web-trip-kind">Conducteur · MTL → QC</div>
                     <div class="web-trip-meta">20 oct. · 14h</div>
                   </div>
                   <div class="web-trip-price">$</div>
@@ -709,8 +776,8 @@
                 <div class="web-trip-card">
                   <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg></div>
                   <div class="web-trip-mid">
-                    <div class="web-trip-kind">Passager · Qc → MTL</div>
-                    <div class="web-trip-meta">25 oct.</div>
+                    <div class="web-trip-kind">Passager · QC → MTL</div>
+                    <div class="web-trip-meta">25 oct. · 18h</div>
                   </div>
                   <div class="web-trip-price">$</div>
                 </div>
@@ -730,6 +797,7 @@
                 <div class="profile-name">Nom Utilisateur</div>
                 <div class="web-profile-menu">
                   <button class="selected"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3.2-7 7-7s7 3 7 7"/></svg>Profil</button>
+                  <button><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>Paiements</button>
                   <button><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>Paramètres</button>
                   <button><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>Thème</button>
                   <button onclick="go('login')" style="color:var(--danger);"><svg viewBox="0 0 24 24" style="stroke:var(--danger);"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Déconnexion</button>
@@ -750,6 +818,18 @@
   </div>
 
 </div>
+
+<div class="confirm-overlay" id="reservation-confirm" role="dialog" aria-modal="true" aria-labelledby="reservation-confirm-title" aria-hidden="true" onclick="if(event.target === this) hideReservationConfirm()">
+  <div class="confirm-modal">
+    <h2 id="reservation-confirm-title">Confirmer la réservation</h2>
+    <p>Voulez-vous réserver ce trajet maintenant. Vous pouvez voir vos réservations dans "Mes trajets" ?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" type="button" onclick="hideReservationConfirm()">Annuler</button>
+      <button class="btn btn-primary" type="button" onclick="confirmReservation()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <footer class="credit">TrajÉTS — prototype de navigation (aucune logique métier réelle)</footer>
 
 <script>
@@ -792,31 +872,46 @@
   }
 
   function buildResults(){
-    const prices = [40, 20, 15, 50, 100, 5, 10];
-    const rowHTML = (p) => `
+    const trips = [
+      { kind:'passenger', from:'Montréal', to:'Québec', date:'20 oct. · 14h', driver:'Sarah M.', seats:'3 places', price:40, note:'Café accepté' },
+      { kind:'driver', from:'Longueuil', to:'Québec', date:'20 oct. · 14h30', driver:'Marc D.', seats:'2 places', price:35, note:'Bagage moyen' },
+      { kind:'driver', from:'Montréal', to:'Trois-Rivières', date:'21 oct. · 8h', driver:'Alex P.', seats:'1 place', price:22, note:'Non-fumeur' },
+      { kind:'passenger', from:'Laval', to:'Québec', date:'21 oct. · 16h', driver:'Nadia B.', seats:'2 places', price:31, note:'Animaux ok' },
+      { kind:'driver', from:'Brossard', to:'Québec', date:'22 oct. · 7h15', driver:'Étienne L.', seats:'3 places', price:27, note:'Départ flexible' },
+    ];
+    const rowHTML = (trip) => `
       <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg></div>
-      <div class="ride-name"></div>
-      <div class="ride-price">${p} $</div>`;
+      <div class="ride-mid">
+        <div class="ride-route">${trip.from} → ${trip.to}</div>
+        <div class="ride-meta">${trip.driver} · ${trip.date} · ${trip.seats}</div>
+      </div>
+      <div class="ride-price">${trip.price} $</div>`;
 
     const listM = document.getElementById('results-list-m');
     listM.innerHTML = '';
-    prices.forEach(p=>{
+    trips.forEach(trip=>{
       const row = document.createElement('div');
       row.className = 'ride-row';
-      row.innerHTML = rowHTML(p);
+      row.innerHTML = rowHTML(trip);
       listM.appendChild(row);
     });
 
     const listW = document.getElementById('results-list-w');
     listW.innerHTML = '';
-    prices.forEach(p=>{
+    trips.forEach(trip=>{
       const row = document.createElement('div');
       row.className = 'web-ride-card';
       row.innerHTML = `
         <div class="ride-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg></div>
-        <div class="ride-name"></div>
-        <div class="ride-price">${p} $</div>
-        <button class="btn btn-outline" onclick="go('review')">Réserver</button>`;
+        <div class="web-ride-mid">
+          <div class="web-ride-route">${trip.from} → ${trip.to}</div>
+          <div class="web-ride-meta">${trip.driver} · ${trip.date} · ${trip.seats}</div>
+          <div class="web-ride-pills">
+            <span class="web-ride-pill">${trip.note}</span>
+          </div>
+        </div>
+        <div class="ride-price">${trip.price} $</div>
+        <button class="btn btn-outline web-ride-cta" onclick="showReservationConfirm()">Réserver</button>`;
       listW.appendChild(row);
     });
   }
@@ -830,7 +925,7 @@
     el.classList.add('selected');
   }
 
-  function evalRowHTML(kind, anon){
+  function evalRowHTML(kind, name){
     const icon = kind === 'driver'
       ? `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>`
       : `<svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>`;
@@ -839,15 +934,39 @@
     const stars = kind === 'driver'
       ? starFill+starFill+starFill+starFill+starEmpty
       : starFill+starFill+starFill+starFill+starFill;
-    const nameHTML = anon ? `<div class="eval-name anon"></div>` : `<div class="eval-name">John Smith</div>`;
+    const nameHTML = `<div class="eval-name">${name}</div>`;
     return `<div class="eval-row">
-      <div class="eval-icon">${icon}</div>
-      ${nameHTML}
-      <div class="stars">${stars}</div>
-      <svg class="check-ok" viewBox="0 0 24 24"><polyline points="4 12 9 17 20 6"/></svg>
+      <div class="eval-row-main">
+        <div class="eval-icon">${icon}</div>
+        ${nameHTML}
+        <div class="stars">${stars}</div>
+        <svg class="check-ok" viewBox="0 0 24 24"><polyline points="4 12 9 17 20 6"/></svg>
+        <button class="eval-comment-toggle" type="button" onclick="toggleEvalComment(this)" aria-label="Ajouter un commentaire">
+          <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+      <div class="eval-comment-panel">
+        <textarea placeholder="Ajouter un commentaire..." disabled></textarea>
+      </div>
     </div>`;
   }
-  const evalRows = evalRowHTML('driver', false) + evalRowHTML('passenger', true) + evalRowHTML('passenger', true);
+  function toggleEvalComment(button){
+    const row = button.closest('.eval-row');
+    if(row) row.classList.toggle('comment-open');
+  }
+  function showReservationConfirm(){
+    const overlay = document.getElementById('reservation-confirm');
+    if(overlay) overlay.classList.add('active');
+  }
+  function hideReservationConfirm(){
+    const overlay = document.getElementById('reservation-confirm');
+    if(overlay) overlay.classList.remove('active');
+  }
+  function confirmReservation(){
+    hideReservationConfirm();
+    go('review');
+  }
+  const evalRows = evalRowHTML('driver', 'John Doe') + evalRowHTML('passenger', 'Jane Smith') + evalRowHTML('passenger', 'Bob Johnson');
   document.getElementById('eval-table-m').innerHTML = evalRows;
   document.getElementById('eval-table-w').innerHTML = evalRows;
 
@@ -855,7 +974,7 @@
     return `
     <svg viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice">
       <rect width="360" height="700" fill="var(--map-bg)"/>
-      <g transform="translate(28 34) scale(0.7)">
+      <g transform="translate(80 160) scale(0.5)">
       <g stroke="var(--map-line)" stroke-width="3">
         <line x1="0" y1="120" x2="360" y2="60"/>
         <line x1="0" y1="260" x2="360" y2="210"/>
