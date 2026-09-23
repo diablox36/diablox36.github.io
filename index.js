@@ -31,13 +31,20 @@ function init() {
 
 function fillArray(array) {
     const center = size / 2;
-    const anglePerSection = (2 * Math.PI) / colorCount;
+    const cells = [];
 
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
-            const angle = Math.atan2(i - center, j - center) + Math.PI;
-            array[i][j] = Math.floor(angle / anglePerSection) % colorCount;
+            const angle = (Math.atan2(i - center, j - center) + Math.PI * 2) % (Math.PI * 2);
+            cells.push({ i, j, angle });
         }
+    }
+
+    cells.sort((a, b) => a.angle - b.angle);
+
+    for (let index = 0; index < cells.length; index++) {
+        const cell = cells[index];
+        cell && (array[cell.i][cell.j] = Math.floor(index * colorCount / cells.length));
     }
 }
 
